@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alex Video AI</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#101116;color:white;
+ font-family:Arial,sans-serif;padding:18px
+}
+header{text-align:center;padding:15px}
+header h1{color:#7c83ff;margin:5px}
+.card{
+ background:#1d202a;padding:16px;
+ border-radius:15px;margin:15px 0
+}
+video{
+ width:100%;max-height:300px;
+ background:#080808;border-radius:12px
+}
+button,.upload{
+ background:#655cf5;color:white;border:0;
+ padding:13px;border-radius:10px;
+ font-size:15px;cursor:pointer
+}
+.upload{display:block;text-align:center;margin-top:12px}
+input[type=file]{display:none}
+input[type=range]{width:100%}
+input[type=text]{
+ width:100%;padding:12px;border-radius:8px;
+ border:0;margin:10px 0
+}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tools button{background:#292d3a}
+label{display:block;margin:12px 0 5px}
+#message{color:#9da4ff;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🎬 ALEX VIDEO AI</h1>
+<p>Your Smart Video Editor</p>
+</header>
+
+<div class="card">
+<h3>📁 Select Your Video</h3>
+<label class="upload">
+Choose Video
+<input type="file" id="file" accept="video/*">
+</label>
+<video id="video" controls playsinline></video>
+<p id="message">Select a video to start editing</p>
+</div>
+
+<div class="card">
+<h3>✂️ Video Trimming Preview</h3>
+<label>Start Time (seconds)</label>
+<input type="number" id="start" value="0" min="0">
+<label>End Time (seconds)</label>
+<input type="number" id="end" value="0" min="0">
+<button onclick="previewTrim()">Preview Trim</button>
+</div>
+
+<div class="card">
+<h3>🎨 Filters</h3>
+<div class="tools">
+<button onclick="filter('none')">Normal</button>
+<button onclick="filter('grayscale(1)')">B&W</button>
+<button onclick="filter('sepia(1)')">Vintage</button>
+<button onclick="filter('brightness(1.3)')">Bright</button>
+<button onclick="filter('contrast(1.4)')">Contrast</button>
+<button onclick="filter('saturate(1.7)')">Color</button>
+</div>
+</div>
+
+<div class="card">
+<h3>⚡ Video Speed</h3>
+<input type="range" min="0.5" max="2" step="0.1"
+value="1" id="speed"
+oninput="changeSpeed(this.value)">
+<p id="speedText">Speed: 1x</p>
+</div>
+
+<div class="card">
+<h3>📝 Add Text</h3>
+<input type="text" id="caption" placeholder="Enter your text">
+<button onclick="addText()">Preview Text</button>
+<p id="previewText"></p>
+</div>
+
+<script>
+const video=document.getElementById('video');
+const file=document.getElementById('file');
+const message=document.getElementById('message');
+let videoURL=null;
+
+file.onchange=()=>{
+ const f=file.files[0];
+ if(!f)return;
+ if(videoURL)URL.revokeObjectURL(videoURL);
+ videoURL=URL.createObjectURL(f);
+ video.src=videoURL;
+ message.textContent="Video loaded successfully!";
+ video.onloadedmetadata=()=>{
+ document.getElementById('end').value=
+ Math.floor(video.duration);
+ };
+};
+
+function filter(value){
+ video.style.filter=value;
+}
+
+function changeSpeed(value){
+ video.playbackRate=Number(value);
+ document.getElementById('speedText').textContent=
+ "Speed: "+value+"x";
+}
+
+function previewTrim(){
+ const start=Number(document.getElementById('start').value);
+ const end=Number(document.getElementById('end').value);
+ if(!video.src || start<0 || end<=start || end>video.duration){
+ alert("Please enter valid start and end times");
+ return;
+ }
+ video.currentTime=start;
+ video.play();
+ const stop=()=>{
+ if(video.currentTime>=end){
+ video.pause();
+ video.removeEventListener('timeupdate',stop);
+ }
+ };
+ video.addEventListener('timeupdate',stop);
+}
+
+function addText(){
+ const value=document.getElementById('caption').value;
+ document.getElementById('previewText').textContent=
+ value || "Enter some text first";
+}
+</script>
+
+</body>
+</html>
