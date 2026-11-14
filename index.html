@@ -3,100 +3,125 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alex Video AI</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alex Video AI V2</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;background:#101116;color:white;
- font-family:Arial,sans-serif;padding:18px
+body{margin:0;background:#101116;color:white;font-family:Arial;padding:16px}
+header{text-align:center;color:#8585ff}
+.card{background:#20232e;padding:17px;border-radius:16px;margin:16px 0}
+video{width:100%;background:#000;border-radius:12px}
+button,select,.upload{
+ background:#655cf5;color:white;border:0;padding:13px;
+ border-radius:10px;font-size:15px;margin:5px 0
 }
-header{text-align:center;padding:15px}
-header h1{color:#7c83ff;margin:5px}
-.card{
- background:#1d202a;padding:16px;
- border-radius:15px;margin:15px 0
+button{cursor:pointer}
+input,select{max-width:100%}
+input[type=number],input[type=text]{
+ width:100%;padding:12px;border-radius:8px;margin:8px 0
 }
-video{
- width:100%;max-height:300px;
- background:#080808;border-radius:12px
-}
-button,.upload{
- background:#655cf5;color:white;border:0;
- padding:13px;border-radius:10px;
- font-size:15px;cursor:pointer
-}
-.upload{display:block;text-align:center;margin-top:12px}
-input[type=file]{display:none}
 input[type=range]{width:100%}
-input[type=text]{
- width:100%;padding:12px;border-radius:8px;
- border:0;margin:10px 0
-}
-.tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tools button{background:#292d3a}
-label{display:block;margin:12px 0 5px}
-#message{color:#9da4ff;text-align:center}
+.upload{display:block;text-align:center}
+input[type=file]{display:none}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tools button{background:#303546}
+#canvas{display:none}
+#status{color:#a6a7ff;text-align:center}
+.full{width:100%}
 </style>
 </head>
 <body>
 
 <header>
-<h1>🎬 ALEX VIDEO AI</h1>
+<h1>🎬 ALEX VIDEO AI V2</h1>
 <p>Your Smart Video Editor</p>
 </header>
 
 <div class="card">
-<h3>📁 Select Your Video</h3>
+<h2>📁 Select Video</h2>
 <label class="upload">
 Choose Video
-<input type="file" id="file" accept="video/*">
+<input id="file" type="file" accept="video/*">
 </label>
 <video id="video" controls playsinline></video>
-<p id="message">Select a video to start editing</p>
+<p id="status">Select a video to start</p>
 </div>
 
 <div class="card">
-<h3>✂️ Video Trimming Preview</h3>
+<h2>✂️ Trim Video</h2>
 <label>Start Time (seconds)</label>
-<input type="number" id="start" value="0" min="0">
+<input id="start" type="number" value="0" min="0">
 <label>End Time (seconds)</label>
-<input type="number" id="end" value="0" min="0">
-<button onclick="previewTrim()">Preview Trim</button>
+<input id="end" type="number" value="0" min="0">
 </div>
 
 <div class="card">
-<h3>🎨 Filters</h3>
+<h2>🎨 Filters</h2>
 <div class="tools">
-<button onclick="filter('none')">Normal</button>
-<button onclick="filter('grayscale(1)')">B&W</button>
-<button onclick="filter('sepia(1)')">Vintage</button>
-<button onclick="filter('brightness(1.3)')">Bright</button>
-<button onclick="filter('contrast(1.4)')">Contrast</button>
-<button onclick="filter('saturate(1.7)')">Color</button>
+<button onclick="setFilter('none')">Normal</button>
+<button onclick="setFilter('grayscale(1)')">B&W</button>
+<button onclick="setFilter('sepia(1)')">Vintage</button>
+<button onclick="setFilter('brightness(1.3)')">Bright</button>
+<button onclick="setFilter('contrast(1.4)')">Contrast</button>
+<button onclick="setFilter('saturate(1.7)')">Color</button>
 </div>
 </div>
 
 <div class="card">
-<h3>⚡ Video Speed</h3>
-<input type="range" min="0.5" max="2" step="0.1"
-value="1" id="speed"
-oninput="changeSpeed(this.value)">
+<h2>⚡ Video Speed</h2>
+<input id="speed" type="range" min="0.5" max="2"
+step="0.1" value="1"
+oninput="video.playbackRate=Number(this.value);
+speedText.textContent='Speed: '+this.value+'x'">
 <p id="speedText">Speed: 1x</p>
 </div>
 
 <div class="card">
-<h3>📝 Add Text</h3>
-<input type="text" id="caption" placeholder="Enter your text">
-<button onclick="addText()">Preview Text</button>
-<p id="previewText"></p>
+<h2>📝 Text Overlay</h2>
+<input id="caption" type="text" placeholder="Write your text">
 </div>
+
+<div class="card">
+<h2>🎵 Background Music</h2>
+<label class="upload">
+Choose Music
+<input id="musicFile" type="file" accept="audio/*">
+</label>
+<audio id="music" loop></audio>
+<p id="musicStatus">Optional music</p>
+</div>
+
+<div class="card">
+<h2>📺 Export Quality</h2>
+<select id="quality" class="full">
+<option value="720">720p HD</option>
+<option value="1080" selected>1080p Full HD</option>
+<option value="2160">4K Ultra HD</option>
+</select>
+<button class="full" id="exportBtn" onclick="exportVideo()">
+⬇️ EXPORT VIDEO
+</button>
+<p id="exportStatus">Ready to export</p>
+</div>
+
+<canvas id="canvas"></canvas>
 
 <script>
 const video=document.getElementById('video');
 const file=document.getElementById('file');
-const message=document.getElementById('message');
+const music=document.getElementById('music');
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+
 let videoURL=null;
+let musicURL=null;
+let filterValue='none';
+let exporting=false;
+
+function setFilter(value){
+ filterValue=value;
+ video.style.filter=value;
+}
 
 file.onchange=()=>{
  const f=file.files[0];
@@ -104,47 +129,197 @@ file.onchange=()=>{
  if(videoURL)URL.revokeObjectURL(videoURL);
  videoURL=URL.createObjectURL(f);
  video.src=videoURL;
- message.textContent="Video loaded successfully!";
+ document.getElementById('status').textContent=
+ 'Video loaded successfully!';
  video.onloadedmetadata=()=>{
  document.getElementById('end').value=
  Math.floor(video.duration);
  };
 };
 
-function filter(value){
- video.style.filter=value;
+document.getElementById('musicFile').onchange=e=>{
+ const f=e.target.files[0];
+ if(!f)return;
+ if(musicURL)URL.revokeObjectURL(musicURL);
+ musicURL=URL.createObjectURL(f);
+ music.src=musicURL;
+ document.getElementById('musicStatus').textContent=
+ 'Music loaded successfully!';
+};
+
+function drawFrame(){
+ if(!exporting)return;
+
+ ctx.filter=filterValue;
+ ctx.drawImage(video,0,0,canvas.width,canvas.height);
+ ctx.filter='none';
+
+ const caption=document.getElementById('caption').value;
+ if(caption){
+ ctx.font='bold '+Math.max(24,canvas.width*0.045)+'px Arial';
+ ctx.textAlign='center';
+ ctx.textBaseline='bottom';
+ ctx.lineWidth=3;
+ ctx.strokeStyle='black';
+ ctx.fillStyle='white';
+ ctx.strokeText(caption,canvas.width/2,
+ canvas.height-35);
+ ctx.fillText(caption,canvas.width/2,
+ canvas.height-35);
+ }
+
+ if(video.currentTime>=Number(document.getElementById('end').value)){
+ video.pause();
+}
+requestAnimationFrame(drawFrame);
 }
 
-function changeSpeed(value){
- video.playbackRate=Number(value);
- document.getElementById('speedText').textContent=
- "Speed: "+value+"x";
-}
-
-function previewTrim(){
- const start=Number(document.getElementById('start').value);
- const end=Number(document.getElementById('end').value);
- if(!video.src || start<0 || end<=start || end>video.duration){
- alert("Please enter valid start and end times");
+async function exportVideo(){
+ if(!video.src || !video.videoWidth){
+ alert('Please select a video first');
  return;
  }
- video.currentTime=start;
- video.play();
- const stop=()=>{
- if(video.currentTime>=end){
- video.pause();
- video.removeEventListener('timeupdate',stop);
- }
- };
- video.addEventListener('timeupdate',stop);
-}
+ if(exporting)return;
 
-function addText(){
- const value=document.getElementById('caption').value;
- document.getElementById('previewText').textContent=
- value || "Enter some text first";
+ const start=Number(document.getElementById('start').value);
+ const end=Number(document.getElementById('end').value);
+
+ if(start<0 || end<=start || end>video.duration){
+ alert('Enter valid trim times');
+ return;
+ }
+
+ if(!window.MediaRecorder || !canvas.captureStream){
+ alert('Your browser does not support video export');
+ return;
+ }
+
+ const height=Number(document.getElementById('quality').value);
+ const width=Math.round(
+ video.videoWidth*height/video.videoHeight
+ );
+
+ if(height===2160 &&
+ (width>3840 || !confirm(
+ '4K export can use a lot of memory. Continue?'
+ ))){
+ return;
+ }
+
+ canvas.width=width;
+ canvas.height=height;
+
+ const mime=[
+ 'video/webm;codecs=vp9,opus',
+ 'video/webm;codecs=vp8,opus',
+ 'video/webm'
+ ].find(t=>MediaRecorder.isTypeSupported(t));
+
+ if(!mime){
+ alert('WebM export is not supported');
+ return;
+ }
+
+ const canvasStream=canvas.captureStream(30);
+ let tracks=[...canvasStream.getVideoTracks()];
+
+ let sourceStream=null;
+ if(video.captureStream){
+ sourceStream=video.captureStream();
+ }else if(video.mozCaptureStream){
+ sourceStream=video.mozCaptureStream();
+ }
+
+ if(sourceStream){
+ tracks.push(...sourceStream.getAudioTracks());
+ }
+
+ let musicStream=null;
+ if(music.src && music.captureStream){
+ musicStream=music.captureStream();
+ tracks.push(...musicStream.getAudioTracks());
+ }
+
+ const output=new MediaStream(tracks);
+ let chunks=[];
+
+ let recorder;
+ try{
+ recorder=new MediaRecorder(output,{
+ mimeType:mime,
+ videoBitsPerSecond:height===2160?18000000:
+ height===1080?8000000:5000000
+ });
+ }catch(e){
+ alert('Export setup failed: '+e.message);
+ return;
+ }
+
+ exporting=true;
+ document.getElementById('exportBtn').disabled=true;
+ document.getElementById('exportStatus').textContent=
+ 'Exporting... Please wait';
+
+ recorder.ondataavailable=e=>{
+ if(e.data.size)chunks.push(e.data);
+ };
+
+ recorder.onerror=()=>{
+ exporting=false;
+ document.getElementById('exportStatus').textContent=
+ 'Export failed';
+ };
+
+ recorder.onstop=()=>{
+ exporting=false;
+ const blob=new Blob(chunks,{type:'video/webm'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download='Alex-Video-AI.webm';
+ a.click();
+
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+ document.getElementById('exportStatus').textContent=
+ 'Export complete! Check your Downloads folder.';
+ document.getElementById('exportBtn').disabled=false;
+ canvasStream.getTracks().forEach(t=>t.stop());
+ };
+
+ try{
+ video.pause();
+ video.currentTime=start;
+ await new Promise(resolve=>{
+ video.onseeked=resolve;
+ });
+ video.playbackRate=Number(document.getElementById('speed').value);
+
+ if(music.src){
+ music.currentTime=0;
+ await music.play();
+ }
+
+ await video.play();
+ recorder.start(500);
+ drawFrame();
+
+ const finish=()=>{
+ if(recorder.state==='recording')recorder.stop();
+ video.pause();
+ music.pause();
+ };
+ video.ontimeupdate=()=>{
+ if(video.currentTime>=end)finish();
+ };
+ video.onended=finish;
+
+ }catch(e){
+ exporting=false;
+ document.getElementById('exportBtn').disabled=false;
+ document.getElementById('exportStatus').textContent=
+ 'Could not start export: '+e.message;
+ }
 }
 </script>
-
 </body>
 </html>
