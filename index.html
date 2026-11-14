@@ -1,7 +1,8 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0d0f17">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ALEX VIDEO AI V3</title>
@@ -516,6 +517,14 @@ function exportVideo(){
    finish();
   }
  };
+}
+</script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js", {
+      scope: "./"
+    }).catch(console.error);
+  });
 }
 </script>
 </body>
